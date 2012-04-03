@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Net;
+using System.Web.Hosting;
 using System.Web.Mvc;
 using IndexTankDotNet;
 
@@ -10,23 +11,24 @@ namespace Indextank_Sample.Controllers
 	public class DataController : Controller
 	{
 		private const int _indexTankMaximumStringLength = 100000;
+		private readonly IEnumerable<KeyValuePair<string, string>> _documentsToIndex;
 
-		private readonly IEnumerable<string> _documentsToIndex = new[] {
-			"http://www.gutenberg.org/cache/epub/1795/pg1795.txt",
-			"http://www.gutenberg.org/cache/epub/1112/pg1112.txt",
-			"http://www.gutenberg.org/cache/epub/1119/pg1119.txt",
-			"http://www.gutenberg.org/cache/epub/1120/pg1120.txt",
-			"http://www.gutenberg.org/cache/epub/2266/pg2266.txt",
-			"http://www.gutenberg.org/cache/epub/2265/pg2265.txt",
-		};
+		public DataController()
+		{
+			_documentsToIndex = new DirectoryInfo(string.Format("{0}/{1}", HostingEnvironment.ApplicationPhysicalPath,"data"))
+				.GetFiles()
+				.Select(x => new KeyValuePair<string, string>(x.Name, x.FullName));
+		}
 
 		public ActionResult Create()
 		{
-			var index = MvcApplication.GetIndexTankIndex();
 			var documents = _documentsToIndex.AsParallel().Select(
-				x => new { url = x, text = new WebClient().DownloadString(x)});
+				x => new { name = x.Key, text = System.IO.File.ReadAllText(x.Value) });
+
+			var index = MvcApplication.GetIndexTankIndex();
+
 			index.AddDocuments(documents.Select(x =>
-				new Document(x.url, x.text.Substring(0, Math.Min(x.text.Length, _indexTankMaximumStringLength)))));
+				new Document(x.name, x.text.Substring(0, Math.Min(x.text.Length, _indexTankMaximumStringLength)))));
 
 			TempData["SuccessMessage"] = "Data loaded";
 			return RedirectToAction("Index", "Home");
@@ -35,7 +37,7 @@ namespace Indextank_Sample.Controllers
 		public ActionResult Destroy()
 		{
 			var index = MvcApplication.GetIndexTankIndex();
-			index.DeleteDocuments(_documentsToIndex);
+			index.DeleteDocuments(_documentsToIndex.Select(x => x.Key));
 			TempData["SuccessMessage"] = "Documents deleted";
 			return RedirectToAction("Index", "Home");
 		}
