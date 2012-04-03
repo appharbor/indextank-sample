@@ -1,0 +1,15 @@
+﻿@model IEnumerable<string>
+
+@{
+	ViewBag.Title = "Show";
+}
+
+<h2>Show</h2>
+
+<ul>
+	@foreach (var result in Model) {
+		<li>
+			<a href="@result">@result</a>
+		</li>
+	}
+</ul>

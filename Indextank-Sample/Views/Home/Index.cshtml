@@ -1,0 +1,38 @@
+﻿@model int
+
+@{
+	ViewBag.Title = "Home";
+}
+
+<h2>Home</h2>
+
+<p>
+	@if (TempData["SuccessMessage"] != null) {
+		@TempData["SuccessMessage"]
+	}
+</p>
+
+<p>
+	Index size (may take some time to update): @Model
+</p>
+
+<p>
+	@using (Html.BeginForm("Show", "Search", FormMethod.Get)) {
+		@Html.TextBox("query")
+		<input type="submit" value="Search" />
+	}
+</p>
+
+<p>
+	@using (Html.BeginForm("Create", "Data", FormMethod.Post)) {
+		<input type="submit" value="Load data" />
+	}
+</p>
+
+@if (Model > 0) {
+	<p>
+		@using (Html.BeginForm("Destroy", "Data", FormMethod.Post)) {
+			<input type="submit" value="Clean index" />
+		}
+	</p>
+}
